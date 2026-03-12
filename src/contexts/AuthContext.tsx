@@ -31,57 +31,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchOrCreateProfile = async (authUser: User) => {
+  const fetchProfile = async (userId: string) => {
     try {
-      // Try to fetch existing profile
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authUser.id)
-        .single();
-
-      if (data) {
-        setProfile(data);
-        return;
-      }
-
-      // If not found, create it
-      if (error?.code === 'PGRST116') {
-        const { data: newProfile } = await supabase
-          .from('users')
-          .insert({
-            id: authUser.id,
-            email: authUser.email,
-            plan: 'free',
-            credits: 50,
-          })
-          .select()
-          .single();
-
-        if (newProfile) setProfile(newProfile);
-      }
+      const { data } = await supabase.from('users').select('*').eq('id', userId).single();
+      if (data) setProfile(data);
     } catch {
-      // Profile fetch/create failure should not block auth
-      console.error('Profile fetch failed — continuing without profile');
+      console.error('Profile fetch failed');
     }
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // onAuthStateChange fires with INITIAL_SESSION on mount,
+    // including when the URL has a hash token — handles everything
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth event:', event, 'User:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchOrCreateProfile(session.user).finally(() => setLoading(false));
-      } else {
-        setLoading(false);
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchOrCreateProfile(session.user);
+        await fetchProfile(session.user.id);
       } else {
         setProfile(null);
       }
@@ -114,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshProfile = async () => {
-    if (user) await fetchOrCreateProfile(user);
+    if (user) await fetchProfile(user.id);
   };
 
   return (

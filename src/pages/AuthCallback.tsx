@@ -1,38 +1,16 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
-  const done = useRef(false);
-
-  const go = (path: string) => {
-    if (!done.current) {
-      done.current = true;
-      navigate(path, { replace: true });
-    }
-  };
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    // Give Supabase time to parse the hash and store the session
-    const timer = setTimeout(async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      go(session ? '/dashboard' : '/');
-    }, 500);
-
-    // Also listen in case it fires before the timeout
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        clearTimeout(timer);
-        go('/dashboard');
-      }
-    });
-
-    return () => {
-      clearTimeout(timer);
-      subscription.unsubscribe();
-    };
-  }, []);
+    if (!loading) {
+      navigate(user ? '/dashboard' : '/', { replace: true });
+    }
+  }, [user, loading, navigate]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">

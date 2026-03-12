@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
+import AuthCallback from "./pages/AuthCallback";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -12,6 +13,7 @@ const App = () => (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>

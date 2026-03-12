@@ -1,0 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 14% 6%;
+    --foreground: 240 10% 90%;
+
+    --card: 240 14% 12%;
+    --card-foreground: 240 10% 90%;
+    --card-border: 240 12% 22%;
+
+    --popover: 240 14% 12%;
+    --popover-foreground: 240 10% 90%;
+
+    --primary: 214 80% 40%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 214 80% 50%;
+
+    --secondary: 240 12% 18%;
+    --secondary-foreground: 240 10% 90%;
+
+    --muted: 240 12% 18%;
+    --muted-foreground: 240 10% 50%;
+
+    --accent: 38 92% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 12% 22%;
+    --input: 240 12% 22%;
+    --ring: 214 80% 50%;
+
+    --radius: 0.875rem;
+
+    --sidebar-background: 240 14% 8%;
+    --sidebar-foreground: 240 10% 90%;
+    --sidebar-primary: 214 80% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 12% 18%;
+    --sidebar-accent-foreground: 240 10% 90%;
+    --sidebar-border: 240 12% 22%;
+    --sidebar-ring: 214 80% 50%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(214 80% 40%), hsl(214 80% 32%));
+    --gradient-pro: linear-gradient(135deg, hsl(38 92% 50%), hsl(28 90% 42%));
+    --gradient-hero: radial-gradient(ellipse at 30% 20%, hsla(214, 80%, 40%, 0.15) 0%, transparent 60%);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer utilities {
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  .gradient-pro {
+    background: var(--gradient-pro);
+  }
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+  .text-gradient-pro {
+    background: var(--gradient-pro);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}

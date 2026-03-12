@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
+  // Still initializing auth — show spinner, do NOT redirect yet
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">

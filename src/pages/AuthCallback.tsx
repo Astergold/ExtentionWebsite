@@ -1,46 +1,38 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
+  const done = useRef(false);
+
+  const go = (path: string) => {
+    if (!done.current) {
+      done.current = true;
+      navigate(path, { replace: true });
+    }
+  };
 
   useEffect(() => {
-    let redirected = false;
+    // Give Supabase time to parse the hash and store the session
+    const timer = setTimeout(async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      go(session ? '/dashboard' : '/');
+    }, 500);
 
-    const redirect = (path: string) => {
-      if (!redirected) {
-        redirected = true;
-        navigate(path, { replace: true });
-      }
-    };
-
-    // Listen for auth state change triggered by hash fragment
+    // Also listen in case it fires before the timeout
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        redirect('/dashboard');
-      } else if (event === 'INITIAL_SESSION') {
-        if (session) {
-          redirect('/dashboard');
-        } else {
-          // No session from hash — wait a bit then fallback
-          setTimeout(() => redirect('/'), 2000);
-        }
+        clearTimeout(timer);
+        go('/dashboard');
       }
     });
 
-    // Hard timeout fallback in case nothing fires
-    const timeout = setTimeout(() => {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        redirect(session ? '/dashboard' : '/');
-      });
-    }, 3000);
-
     return () => {
+      clearTimeout(timer);
       subscription.unsubscribe();
-      clearTimeout(timeout);
     };
-  }, [navigate]);
+  }, []);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">

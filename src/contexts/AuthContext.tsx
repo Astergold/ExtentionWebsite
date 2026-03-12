@@ -32,13 +32,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase.from('users').select('*').eq('id', userId).single();
-    if (data) setProfile(data);
+    try {
+      const { data } = await supabase.from('users').select('*').eq('id', userId).single();
+      if (data) setProfile(data);
+    } catch {
+      // Profile fetch failure should not block auth
+    }
   };
 
   useEffect(() => {
-    // onAuthStateChange handles both existing sessions AND hash fragment tokens
-    // It fires automatically when Supabase detects #access_token in the URL
+    // Initialize: get current session first, then listen for changes
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        fetchProfile(session.user.id).finally(() => setLoading(false));
+      } else {
+        setLoading(false);
+      }
+    });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -62,6 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
     setProfile(null);
   };
 

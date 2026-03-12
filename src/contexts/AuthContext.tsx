@@ -41,12 +41,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // onAuthStateChange fires with INITIAL_SESSION on mount,
-    // including when the URL has a hash token — handles everything
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth event:', event, 'User:', session?.user?.email);
+
+      // Ignore TOKEN_REFRESHED and SIGNED_OUT that fire right after SIGNED_IN
+      // (these are artifacts of the old session being cleaned up)
+      if (event === 'SIGNED_OUT' && user !== null) {
+        // A SIGNED_OUT right after we already have a user = old session cleanup, ignore it
+        console.log('Ignoring spurious SIGNED_OUT');
+        return;
+      }
+
       setSession(session);
       setUser(session?.user ?? null);
+
       if (session?.user) {
         await fetchProfile(session.user.id);
       } else {
@@ -56,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [user]);
 
   const signInWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({

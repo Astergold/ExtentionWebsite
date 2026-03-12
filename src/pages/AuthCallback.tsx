@@ -1,16 +1,19 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const redirected = useRef(false);
 
   useEffect(() => {
-    if (!loading) {
+    // Only redirect once — ignore any subsequent auth state changes
+    if (!loading && !redirected.current) {
+      redirected.current = true;
       navigate(user ? '/dashboard' : '/', { replace: true });
     }
-  }, [user, loading, navigate]);
+  }, [user, loading]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">

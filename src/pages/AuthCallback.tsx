@@ -6,27 +6,40 @@ export default function AuthCallback() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Supabase needs to process the #hash fragment first
-    // onAuthStateChange fires once the session is extracted from the URL hash
+    let redirected = false;
+
+    const redirect = (path: string) => {
+      if (!redirected) {
+        redirected = true;
+        navigate(path, { replace: true });
+      }
+    };
+
+    // Listen for auth state change triggered by hash fragment
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session) {
-        subscription.unsubscribe();
-        navigate('/dashboard', { replace: true });
-      } else if (event === 'SIGNED_OUT' || (!session && event !== 'INITIAL_SESSION')) {
-        subscription.unsubscribe();
-        navigate('/', { replace: true });
+        redirect('/dashboard');
+      } else if (event === 'INITIAL_SESSION') {
+        if (session) {
+          redirect('/dashboard');
+        } else {
+          // No session from hash — wait a bit then fallback
+          setTimeout(() => redirect('/'), 2000);
+        }
       }
     });
 
-    // Fallback: if already has session (e.g. page refresh), redirect immediately
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        subscription.unsubscribe();
-        navigate('/dashboard', { replace: true });
-      }
-    });
+    // Hard timeout fallback in case nothing fires
+    const timeout = setTimeout(() => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        redirect(session ? '/dashboard' : '/');
+      });
+    }, 3000);
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, [navigate]);
 
   return (

@@ -6,13 +6,27 @@ export default function AuthCallback() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
+    // Supabase needs to process the #hash fragment first
+    // onAuthStateChange fires once the session is extracted from the URL hash
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        subscription.unsubscribe();
         navigate('/dashboard', { replace: true });
-      } else {
+      } else if (event === 'SIGNED_OUT' || (!session && event !== 'INITIAL_SESSION')) {
+        subscription.unsubscribe();
         navigate('/', { replace: true });
       }
     });
+
+    // Fallback: if already has session (e.g. page refresh), redirect immediately
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        subscription.unsubscribe();
+        navigate('/dashboard', { replace: true });
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   return (
